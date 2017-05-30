@@ -1,0 +1,2 @@
+class VacationProperty < ApplicationRecord
+end

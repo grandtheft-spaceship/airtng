@@ -1,0 +1,29 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Vacation Properties</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Description</th>
+      <th>Image url</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @vacation_properties.each do |vacation_property| %>
+      <tr>
+        <td><%= vacation_property.description %></td>
+        <td><%= vacation_property.image_url %></td>
+        <td><%= link_to 'Show', vacation_property %></td>
+        <td><%= link_to 'Edit', edit_vacation_property_path(vacation_property) %></td>
+        <td><%= link_to 'Destroy', vacation_property, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Vacation Property', new_vacation_property_path %>
