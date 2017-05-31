@@ -20,7 +20,7 @@ class ReservationsController < ApplicationController
   # GET /reservations/1/edit
   def edit
   end
-  
+
   # POST /reservations
   # POST /reservations.json
   def create
@@ -36,6 +36,29 @@ class ReservationsController < ApplicationController
     end
   end
 
+# WEBHOOK FOR TWILIO INCOMING MESSAGE FROM HOST
+  def accept_or_reject
+    incoming = Santize.clean(params[:From]).gsub(/^\+\d/, '')
+    sms_input = params[:Body].downcase
+    begin
+      @host = User.find_by(phone_number: incoming)
+      @reservation = @host.pending_reservation
+
+      if sms_input == "accept" || sms_input == "yes"
+        @reservation.confirm!
+      else
+        @reservation.reject!
+      end
+
+      @host.check_for_reservations_pending
+
+      sms_response = "You have successfully #{@reservation.status} the reservation."
+      respond(sms_response)
+    rescue
+      sms_response = "Sorry, it looks like you don't have any reservations to respond to"
+      respond(sms_response)
+    end
+  end
 
   # PATCH/PUT /reservations/1
   # PATCH/PUT /reservations/1.json
@@ -62,13 +85,28 @@ class ReservationsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_reservation
-      @reservation = Reservation.find(params[:id])
-    end
 
-    # Never trust parameters from the scary internet, only allow the white list through.
-    def reservation_params
-      params.require(:reservation).permit(:name, :phone_number, :vacation_property_id, :user_id, :status)
+  # SEND AN SMS BACK TO THE SUBSCRIBER
+  def respond(message)
+    response = Twilio::TwiML::Response.new do |r|
+      r.Message message
     end
+    render text: response.text
+  end
+
+  # NEVER TRUST PARAMETERS FROM THE SCARY INTERNET, ONLY ALLOW THE WHITE LIST THROUGH
+  def reservation_params
+    params.require(:reservation).permit(:name, :phone_number, :message)
+  end
+
+
+  # Use callbacks to share common setup or constraints between actions.
+  def set_reservation
+    @reservation = Reservation.find(params[:id])
+  end
+
+  # Never trust parameters from the scary internet, only allow the white list through.
+  def reservation_params
+    params.require(:reservation).permit(:name, :phone_number, :vacation_property_id, :user_id, :status)
+  end
 end
