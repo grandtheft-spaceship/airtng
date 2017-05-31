@@ -20,22 +20,22 @@ class ReservationsController < ApplicationController
   # GET /reservations/1/edit
   def edit
   end
-
+  
   # POST /reservations
   # POST /reservations.json
   def create
-    @reservation = Reservation.new(reservation_params)
+    @vacation_property = VacationProperty.find(params[:reservation][:property_id])
+    @reservation = @vacation_property.reservations.create(reservation_params)
 
-    respond_to do |format|
-      if @reservation.save
-        format.html { redirect_to @reservation, notice: 'Reservation was successfully created.' }
-        format.json { render :show, status: :created, location: @reservation }
-      else
-        format.html { render :new }
-        format.json { render json: @reservation.errors, status: :unprocessable_entity }
-      end
+    if @reservation.save
+      flash[:notice] = "Sending your reservation request now."
+      @reservation.notify_host
+      redirect_to @vacation_property
+    else
+      flash[:danger] = @reservation.errors
     end
   end
+
 
   # PATCH/PUT /reservations/1
   # PATCH/PUT /reservations/1.json
